@@ -74,7 +74,7 @@ def call(name: str,
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.post("/uninstall/{name}")
+@router.delete("/uninstall/{name}")
 def uninstall_plugin(name: str, db: Session = Depends(get_db)):
     plugin = db.query(PluginInfo).filter_by(name=name).first()
     if not plugin:
