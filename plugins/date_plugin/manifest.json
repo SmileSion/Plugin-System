@@ -1,0 +1,6 @@
+{
+  "name": "date_plugin",
+  "version": "0.1",
+  "description": "支持自然语言日期解析",
+  "entry": "plugin.py"
+}
