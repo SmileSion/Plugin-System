@@ -1,13 +1,35 @@
-import importlib.util, sys
+import importlib.util
+import sys
+import os
 from plugin_base import PluginBase
 
 loaded_plugins = {}  # name: instance of Plugin
 
+# 插件根目录绝对路径
+PLUGIN_ROOT = os.path.abspath("plugins")
+
 def load_plugin(entry_path, name):
+    entry_path = os.path.abspath(entry_path)
+    # 限制插件入口必须在插件根目录下
+    if not entry_path.startswith(PLUGIN_ROOT + os.sep):
+        raise ValueError(f"禁止加载插件目录之外的文件：{entry_path}")
+
+    plugin_dir = os.path.dirname(entry_path)
+    if plugin_dir not in sys.path:
+        sys.path.insert(0, plugin_dir)  # 仅添加插件目录到 sys.path，避免导入其他目录模块
+
     spec = importlib.util.spec_from_file_location(name, entry_path)
     mod = importlib.util.module_from_spec(spec)
+
+    # 设置 __package__ 以支持相对导入
+    if "." in name:
+        mod.__package__ = name.rpartition(".")[0]
+    else:
+        mod.__package__ = name
+
     sys.modules[name] = mod
     spec.loader.exec_module(mod)
+
     plugin_class = getattr(mod, "Plugin", None)
     if plugin_class and issubclass(plugin_class, PluginBase):
         plugin = plugin_class()
