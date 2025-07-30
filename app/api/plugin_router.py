@@ -2,7 +2,7 @@ import os
 import subprocess
 from fastapi import APIRouter, Body, HTTPException, UploadFile, Depends, Query
 from app.utils.file_utils import extract_and_parse_manifest
-from app.core.plugin_loader import call_plugin_method, enable_plugin, disable_plugin, loaded_plugins
+from app.core.plugin_loader import call_plugin_method_in_process, enable_plugin, disable_plugin, loaded_plugins
 from app.db.database import get_db
 from app.db.models import PluginInfo, PluginStatus
 from sqlalchemy.orm import Session
@@ -58,7 +58,7 @@ def list_plugins(db: Session = Depends(get_db)):
     return db.query(PluginInfo).all()
 
 @router.post("/call/{name}")
-def call(name: str, 
+def call(name: str,
          payload: dict = Body(...),
          db: Session = Depends(get_db)):
     plugin = db.query(PluginInfo).filter_by(name=name).first()
@@ -69,7 +69,7 @@ def call(name: str,
     args = payload.get("args", {})
 
     try:
-        result = call_plugin_method(name, method, args)
+        result = call_plugin_method_in_process(plugin.entry_path, method, args)
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
