@@ -18,6 +18,7 @@ from app.core.plugin_core.plugin_loader import (
     disable_plugin,
     loaded_plugins,
 )
+from app.core.plugin_core.plugin_update import update_plugin
 from app.db.database import get_db
 from app.db.models import PluginInfo, PluginStatus
 from .schemas.call_schemas import PluginCallRequest
@@ -30,23 +31,12 @@ CHUNK_SIZE = 1024 * 1024  # 每次最多读取 1MB
 @router.post("/upload")
 def upload_plugin(file: UploadFile, db: Session = Depends(get_db)):
     temp_path = f"/tmp/{file.filename}"
-    total_size = 0
+    save_upload_file_limited(file, temp_path)
 
-    with open(temp_path, "wb") as out_file:
-        while chunk := file.file.read(CHUNK_SIZE):
-            total_size += len(chunk)
-            if total_size > MAX_PLUGIN_SIZE:
-                out_file.close()
-                os.remove(temp_path)
-                raise HTTPException(status_code=413, detail="插件文件过大，不能超过 3MB")
-            out_file.write(chunk)
-
-    # 重新打开文件再传给 extract_and_parse_manifest
     with open(temp_path, "rb") as f:
         file.file = f
         manifest = extract_and_parse_manifest(file)
 
-    # 检测插件是否存在、保存数据库、安装依赖
     existing_plugin = db.query(PluginInfo).filter_by(name=manifest["name"]).first()
     if existing_plugin:
         os.remove(temp_path)
@@ -165,3 +155,30 @@ def check_plugin_status(name: str, db: Session = Depends(get_db)):
         "status_db": plugin.status.name,  # 数据库中状态（比如 INSTALLED, ENABLED, DISABLED）
         "is_loaded_in_memory": is_enabled  # 是否内存中已启用
     }
+
+@router.post("/update/{name}")
+def update(name: str, file: UploadFile, db: Session = Depends(get_db)):
+    try:
+        plugin = update_plugin(db, name, file)
+        return {"msg": f"插件 {name} 更新成功", "version": plugin.version}
+    except ValueError as ve:
+        # 版本相同或插件不存在等业务错误，返回 400 或自定义状态码
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        # 其他未处理异常，返回 500
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# 限制上传大小函数
+def save_upload_file_limited(file: UploadFile, dest_path: str):
+    total_size = 0
+    with open(dest_path, "wb") as out_file:
+        while chunk := file.file.read(CHUNK_SIZE):
+            total_size += len(chunk)
+            if total_size > MAX_PLUGIN_SIZE:
+                out_file.close()
+                os.remove(dest_path)
+                size_mb = MAX_PLUGIN_SIZE / (1024 * 1024)
+                raise HTTPException(status_code=413, detail=f"文件过大，不能超过 {size_mb:.2f} MB")
+            out_file.write(chunk)
