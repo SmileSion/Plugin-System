@@ -61,7 +61,7 @@ def upload_plugin(file: UploadFile, db: Session = Depends(get_db)):
         try:
             subprocess.check_call(["pip", "install", "-r", requirements_path])
         except subprocess.CalledProcessError:
-            logger.error(f"插件 {plugin.name} 安装 requirements 失败：{e}")
+            logger.error(f"插件 {plugin.name} 安装 requirements 失败")
             raise HTTPException(status_code=500, detail="插件上传失败：requirements 安装出错")
 
     os.remove(temp_path)
