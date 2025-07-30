@@ -5,7 +5,7 @@ Description: 主函数，启动入口。
 """
 from fastapi import FastAPI
 from app.api.plugin_router import router as plugin_router
-from app.core.startup_hooks import register_startup_event
+from app.core.hook_core.startup_hooks import register_startup_event
 from app.db.database import Base, engine
 
 app = FastAPI(title="插件管理系统")

@@ -3,15 +3,17 @@ Author: SmileSion
 Date: 2025-07-30
 Description: 插件加载模块。
 """
+import os
+import sys
 import importlib.util
-import sys, atexit, os
 from multiprocessing import Process, Queue
+
 from app.core.plugin_core.plugin_base import PluginBase
+from app.core.hook_core.end_hooks import add_process
+
 
 PLUGIN_ROOT = os.path.abspath("plugins")
 
-# 所有子进程引用
-running_processes = []
 loaded_plugins = {}
 
 def load_plugin(entry_path, name):
@@ -74,7 +76,7 @@ def _plugin_runner(entry_path, method_name, args, output_queue):
 def call_plugin_method_in_process(entry_path, method_name, args: dict, timeout=10):
     q = Queue()
     p = Process(target=_plugin_runner, args=(entry_path, method_name, args, q))
-    running_processes.append(p)  # 加入列表
+    add_process(p)  # 这里交给 process_manager 管理
     p.start()
     p.join(timeout)
     if p.is_alive():
@@ -85,11 +87,3 @@ def call_plugin_method_in_process(entry_path, method_name, args: dict, timeout=1
     if "error" in output:
         raise RuntimeError(output["error"])
     return output["result"]
-
-def _cleanup_processes():
-    for p in running_processes:
-        if p.is_alive():
-            print(f"[清理] 终止子进程 {p.pid}")
-            p.terminate()
-
-atexit.register(_cleanup_processes)

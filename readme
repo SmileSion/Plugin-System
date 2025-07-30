@@ -9,3 +9,9 @@ uvicorn app.main:app --reload
 - 生命周期管理：支持插件的安装、启用、停用、卸载
 - 状态管理：支持插件状态持久化，避免重复初始化
 - 插件能力标准化：通过继承 PluginBase 统一接口
+
+**插件开发规范：**
+- 必须继承 PluginBase
+- 必须实现：activate(), deactivate()
+- 可选实现：health_check(), get_metadata()
+- 可以自由扩展自定义方法供主程序动态调用
