@@ -16,11 +16,32 @@ import inspect
 
 router = APIRouter()
 
+MAX_PLUGIN_SIZE = 3 * 1024 * 1024  # 3MB
+CHUNK_SIZE = 1024 * 1024  # 每次最多读取 1MB
+
 @router.post("/upload")
 def upload_plugin(file: UploadFile, db: Session = Depends(get_db)):
-    manifest = extract_and_parse_manifest(file)
+    temp_path = f"/tmp/{file.filename}"
+    total_size = 0
+
+    with open(temp_path, "wb") as out_file:
+        while chunk := file.file.read(CHUNK_SIZE):
+            total_size += len(chunk)
+            if total_size > MAX_PLUGIN_SIZE:
+                out_file.close()
+                os.remove(temp_path)
+                raise HTTPException(status_code=413, detail="插件文件过大，不能超过 3MB")
+            out_file.write(chunk)
+
+    # 重新打开文件再传给 extract_and_parse_manifest
+    with open(temp_path, "rb") as f:
+        file.file = f
+        manifest = extract_and_parse_manifest(file)
+
+    # 检测插件是否存在、保存数据库、安装依赖
     existing_plugin = db.query(PluginInfo).filter_by(name=manifest["name"]).first()
     if existing_plugin:
+        os.remove(temp_path)
         raise HTTPException(status_code=400, detail=f"插件名 '{manifest['name']}' 已存在，请更换名称")
 
     plugin = PluginInfo(
@@ -28,7 +49,7 @@ def upload_plugin(file: UploadFile, db: Session = Depends(get_db)):
         version=manifest.get("version"),
         description=manifest.get("description", ""),
         entry_path=manifest["entry_path"],
-        status=PluginStatus.INSTALLED  
+        status=PluginStatus.INSTALLED
     )
     db.add(plugin)
     db.commit()
@@ -40,6 +61,7 @@ def upload_plugin(file: UploadFile, db: Session = Depends(get_db)):
         except subprocess.CalledProcessError:
             raise HTTPException(status_code=500, detail="插件上传失败：requirements 安装出错")
 
+    os.remove(temp_path)
     return {"msg": "上传成功", "plugin": plugin.name}
 
 @router.post("/enable/{name}")
