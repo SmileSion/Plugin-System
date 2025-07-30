@@ -1,3 +1,8 @@
+"""
+Author: SmileSion
+Date: 2025-07-30
+Description: 接口路由注册模块。
+"""
 import os
 import subprocess
 from fastapi import APIRouter, Body, HTTPException, UploadFile, Depends, Query

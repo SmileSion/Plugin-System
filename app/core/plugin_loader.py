@@ -1,3 +1,8 @@
+"""
+Author: SmileSion
+Date: 2025-07-30
+Description: 插件加载模块。
+"""
 import importlib.util
 import sys, atexit, os
 from multiprocessing import Process, Queue

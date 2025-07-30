@@ -1,3 +1,8 @@
+"""
+Author: SmileSion
+Date: 2025-07-30
+Description: 插件处理模块。
+"""
 import zipfile
 import tarfile
 import os

@@ -1,3 +1,8 @@
+"""
+Author: SmileSion
+Date: 2025-07-30
+Description: 插件元数据定义。
+"""
 import enum
 from sqlalchemy import Column, Enum, String, Integer, DateTime
 from datetime import datetime

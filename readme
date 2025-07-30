@@ -1,3 +1,11 @@
 
 uvicorn app.main:app --reload
+
 <http://localhost:8000/docs>
+
+**功能介绍：**
+- 插件上传：支持通过接口上传 .zip 格式插件包
+- Manifest 解析：自动识别 manifest.json 并提取插件元信息
+- 生命周期管理：支持插件的安装、启用、停用、卸载
+- 状态管理：支持插件状态持久化，避免重复初始化
+- 插件能力标准化：通过继承 PluginBase 统一接口

@@ -1,3 +1,8 @@
+"""
+Author: SmileSion
+Date: 2025-07-30
+Description: 插件启动钩子。
+"""
 from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 from app.db.models import PluginInfo, PluginStatus
