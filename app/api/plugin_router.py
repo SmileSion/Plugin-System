@@ -8,6 +8,7 @@ import subprocess
 from fastapi import APIRouter, Body, HTTPException, UploadFile, Depends, Query
 from app.utils.file_utils import extract_and_parse_manifest
 from app.core.plugin_loader import call_plugin_method_in_process, enable_plugin, disable_plugin, loaded_plugins
+from .schemas.call_schemas import PluginCallRequest
 from app.db.database import get_db
 from app.db.models import PluginInfo, PluginStatus
 from sqlalchemy.orm import Session
@@ -86,14 +87,14 @@ def list_plugins(db: Session = Depends(get_db)):
 
 @router.post("/call/{name}")
 def call(name: str,
-         payload: dict = Body(...),
+         payload: PluginCallRequest = Body(...),
          db: Session = Depends(get_db)):
     plugin = db.query(PluginInfo).filter_by(name=name).first()
     if not plugin or plugin.status != PluginStatus.ENABLED:
         raise HTTPException(status_code=400, detail="插件未启用或不存在")
 
-    method = payload.get("method")
-    args = payload.get("args", {})
+    method = payload.method
+    args = payload.args
 
     try:
         result = call_plugin_method_in_process(plugin.entry_path, method, args)
