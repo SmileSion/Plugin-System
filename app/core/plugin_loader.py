@@ -6,7 +6,7 @@ Description: 插件加载模块。
 import importlib.util
 import sys, atexit, os
 from multiprocessing import Process, Queue
-from plugin_base import PluginBase
+from app.core.plugin_core.plugin_base import PluginBase
 
 PLUGIN_ROOT = os.path.abspath("plugins")
 
