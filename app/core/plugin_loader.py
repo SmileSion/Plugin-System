@@ -25,10 +25,6 @@ def load_plugin(entry_path, name):
 
     spec = importlib.util.spec_from_file_location(name, entry_path)
     mod = importlib.util.module_from_spec(spec)
-    if "." in name:
-        mod.__package__ = name.rpartition(".")[0]
-    else:
-        mod.__package__ = name
 
     sys.modules[name] = mod
     spec.loader.exec_module(mod)
