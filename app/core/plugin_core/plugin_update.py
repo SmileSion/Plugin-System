@@ -25,6 +25,17 @@ class UploadedFileWrapper:
     def __del__(self):
         self.close()
 
+def find_plugin_root(path):
+    subdirs = [os.path.join(path, name) for name in os.listdir(path)
+               if os.path.isdir(os.path.join(path, name))]
+    if len(subdirs) == 1:
+        return subdirs[0]
+    elif os.path.isdir(path) and os.path.isfile(os.path.join(path, "plugin.py")):
+        # 整个 tempdir 就是插件目录（无子目录形式）
+        return path
+    else:
+        raise FileNotFoundError(f"无法确定插件根目录，请检查插件包结构是否正确（应包含唯一顶层文件夹）")
+
 def update_plugin(db: Session, plugin_name: str, uploaded_file):
     logger.info(f"开始更新插件：{plugin_name}")
     
@@ -65,9 +76,19 @@ def update_plugin(db: Session, plugin_name: str, uploaded_file):
             logger.info(f"删除旧插件目录：{dest_folder}")
             shutil.rmtree(dest_folder)
 
-        logger.info(f"复制插件新版本至：{dest_folder}")
-        shutil.copytree(os.path.join(tmpdir, plugin_name), dest_folder)
+        # ✅ 自动探测实际插件目录（修复点）
+        try:
+            plugin_src_dir = os.path.join(tmpdir, plugin_name)
+            if not os.path.exists(plugin_src_dir):
+                logger.warning(f"未找到指定插件目录 {plugin_src_dir}，尝试自动探测根目录")
+                plugin_src_dir = find_plugin_root(tmpdir)
+        except Exception as e:
+            raise RuntimeError(f"插件解压后目录结构异常：{e}")
 
+        logger.info(f"复制插件新版本至：{dest_folder}")
+        shutil.copytree(plugin_src_dir, dest_folder)
+
+    # 后续逻辑不变
     requirements_path = os.path.join(dest_folder, "requirements.txt")
     if os.path.exists(requirements_path):
         try:
