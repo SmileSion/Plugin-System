@@ -180,6 +180,8 @@ def check_plugin_status(name: str, db: Session = Depends(get_db)):
 @router.post("/update/{name}")
 def update(name: str, file: UploadFile, db: Session = Depends(get_db)):
     logger.info(f"收到插件更新请求：{name}")
+    temp_path = f"/tmp/update_{file.filename}"
+    save_upload_file_limited(file, temp_path)
     try:
         plugin = update_plugin(db, name, file)
         logger.info(f"插件更新成功：{name} -> 版本 {plugin.version}")
