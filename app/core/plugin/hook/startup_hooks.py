@@ -6,7 +6,7 @@ Description: 插件启动钩子。
 from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 from app.db.models import PluginInfo, PluginStatus
-from app.core.plugin_core.plugin_loader import enable_plugin
+from app.core.plugin.plugin_loader import enable_plugin
 from app.utils.log_utils import setup_logger
 
 logger = setup_logger("plugin_startup")

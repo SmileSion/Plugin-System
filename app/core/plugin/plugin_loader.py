@@ -8,8 +8,8 @@ import sys
 import importlib.util
 from multiprocessing import Process, Queue
 
-from app.core.plugin_core.plugin_base import PluginBase
-from app.core.hook_core.end_hooks import add_process
+from app.core.plugin.plugin_base import PluginBase
+from app.core.plugin.hook.end_hooks import add_process
 from app.utils.log_utils import setup_logger
 
 PLUGIN_ROOT = os.path.abspath("plugins")
@@ -109,7 +109,7 @@ def _plugin_runner(entry_path, method_name, args, output_queue):
         output_queue.put({"error": str(e)})
 
 
-def call_plugin_method_in_process(entry_path, method_name, args: dict, timeout=10):
+def call_plugin_method_in_process(entry_path, method_name, args: dict, timeout=100):
     logger.info(f"使用进程执行插件方法：{entry_path}::{method_name}")
     q = Queue()
     p = Process(target=_plugin_runner, args=(entry_path, method_name, args, q))

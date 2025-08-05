@@ -13,13 +13,13 @@ from sqlalchemy.orm import Session
 
 from app.utils.file_utils import extract_and_parse_manifest
 from app.utils.log_utils import setup_logger
-from app.core.plugin_core.plugin_loader import (
+from app.core.plugin.plugin_loader import (
     call_plugin_method_in_process,
     enable_plugin,
     disable_plugin,
     loaded_plugins,
 )
-from app.core.plugin_core.plugin_update import update_plugin
+from app.core.plugin.plugin_update import update_plugin
 from app.db.database import get_db
 from app.db.models import PluginInfo, PluginStatus
 from .schemas.call_schemas import PluginCallRequest

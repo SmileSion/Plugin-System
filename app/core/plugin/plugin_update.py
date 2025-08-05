@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.db.models import PluginInfo, PluginStatus
 from app.utils.file_utils import extract_and_parse_manifest
 from app.utils.log_utils import setup_logger
+from app.core.plugin.plugin_loader import disable_plugin
 
 logger = setup_logger("plugin_update")
 
@@ -67,7 +68,7 @@ def update_plugin(db: Session, plugin_name: str, uploaded_file):
             logger.warning(f"插件 {plugin_name} 版本未变（{new_version}），更新被拒绝")
             raise ValueError(f"插件 '{plugin_name}' 版本相同 ({new_version})，不允许重复更新")
 
-        from app.core.plugin_core.plugin_loader import disable_plugin
+
         if plugin.status == PluginStatus.ENABLED:
             logger.info(f"插件 {plugin_name} 已启用，先进行停用处理")
             disable_plugin(plugin_name)
@@ -76,7 +77,7 @@ def update_plugin(db: Session, plugin_name: str, uploaded_file):
             logger.info(f"删除旧插件目录：{dest_folder}")
             shutil.rmtree(dest_folder)
 
-        # ✅ 自动探测实际插件目录（修复点）
+        # 自动探测实际插件目录
         try:
             plugin_src_dir = os.path.join(tmpdir, plugin_name)
             if not os.path.exists(plugin_src_dir):
@@ -88,7 +89,6 @@ def update_plugin(db: Session, plugin_name: str, uploaded_file):
         logger.info(f"复制插件新版本至：{dest_folder}")
         shutil.copytree(plugin_src_dir, dest_folder)
 
-    # 后续逻辑不变
     requirements_path = os.path.join(dest_folder, "requirements.txt")
     if os.path.exists(requirements_path):
         try:
